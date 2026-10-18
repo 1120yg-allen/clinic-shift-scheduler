@@ -43,8 +43,8 @@
 ### 快速開始（本機模式）
 
 ```bash
-git clone https://github.com/<你的帳號>/clinic-shift-scheduler.git
-cd clinic-shift-scheduler
+git clone https://github.com/1120yg-allen/first.git
+cd first
 npm run serve        # 或用任何靜態網站伺服器，然後開 http://localhost:8080
 ```
 
