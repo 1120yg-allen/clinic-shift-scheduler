@@ -215,3 +215,12 @@ a.btn{text-decoration:none;color:inherit}
 a.btn.primary{color:var(--accent-ink)}
 .nbtn{white-space:nowrap}.nbtn .btn{padding:4px 10px;margin-right:6px}
 .logo{height:30px;width:30px;object-fit:contain;border-radius:6px;vertical-align:-8px;margin-right:8px}
+
+.setgrid>*{min-width:0}
+.tabs{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tabs button{white-space:nowrap;flex:none}
+.covitem{font-size:10px;letter-spacing:-.02em;overflow:hidden}
+.chips input,.colors input,.days input{width:1px!important;height:1px!important;margin:0}
+
+#view{display:flex;flex-direction:column;gap:14px}
+.setgrid .sum{min-width:420px}

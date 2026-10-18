@@ -976,11 +976,14 @@ function setHeader(){
   else if(myEmpId()&&cfg){const e=cfg.employees.find(x=>x.id===myEmpId());t=`<span class="badge">員工 ${esc(e?e.name:'')}</span>`}
   else t='<span class="badge">檢視</span>';
   who.innerHTML=t+'<span>排班、畫休、特休與工時統整</span>'+(platform&&platform.signOut?'<button class="btn" data-act="signout" style="padding:3px 10px">登出</button>':'');
-  const tabs=[['pt','物理治療師'],['asst','助理'],['hours','時數與特休']];
-  if(isAdmin||(uid&&myEmpId())) tabs.push(['swap','換班']);
-  tabs.push(['rules','勞基法與診所規則']);
-  if(isAdmin) tabs.push(['settings','設定']);
-  else if(uid) tabs.push(['me','我的資料']);
+  const registering=!isAdmin&&uid&&profileLoaded&&(!myEmpId()||!profileOk(myProfile()));
+  const tabs=registering?[['me','我的資料']]:[['pt','物理治療師'],['asst','助理'],['hours','時數與特休']];
+  if(!registering){
+    if(isAdmin||(uid&&myEmpId())) tabs.push(['swap','換班']);
+    tabs.push(['rules','勞基法與診所規則']);
+    if(isAdmin) tabs.push(['settings','設定']);
+    else if(uid) tabs.push(['me','我的資料']);
+  }
   const cnt=k=>k==='swap'?swapBadge():(k==='settings'&&isAdmin)?Object.keys(reqs).filter(u=>!approved.byUid[u]).length:0;
   document.getElementById('tabs').innerHTML=tabs.map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}${cnt(k)?`<i class="cnt">${cnt(k)}</i>`:''}</button>`).join('');
 }
@@ -1078,8 +1081,10 @@ function rosterHTML(group){
     }).join('');
     return `<tr><th class="name${isMe?' me':''}" scope="row"><strong>${esc(e.name)}${noteSummary(noteOf(e.id))?`<i class="nb" title="${esc(noteSummary(noteOf(e.id)))}">備註</i>`:''}</strong><span>${esc(e.role)}${e.group==='asst'?' · '+f1(workdaysOf(ym)*DAY_H*(+e.ratio||1))+'h':''}</span></th>${cells}</tr>`;
   }).join('');
-  const cov=hideSched?'':`<tr class="cov"><th class="name" scope="row">${group==='pt'?'各科人數':'助理人數'}<br>${cfg.sessions.map(s=>esc(s.label.slice(0,1))).join('·')}</th>${ds.map((d,i)=>`<td class="${wdIdx(d)===0?'mon':''}">${a.cov[i].map(c=>c.open?`<div class="covitem ${isAdmin&&c.short.some(x=>x)?'short':''}" title="${esc(c.dp.label+'：'+cfg.sessions.map((s,j)=>s.label+' '+c.n[j]+'/'+c.need[j]).join('，'))}">${group==='pt'?esc(c.dp.label.slice(0,1))+' ':''}${c.n.join('·')}</div>`:'').join('')}</td>`).join('')}</tr>`;
-  const legendOpts=cfg.options.filter(o=>group==='pt'||o.kind!=='work');
+  const cov=hideSched?'':`<tr class="cov"><th class="name" scope="row">${group==='pt'?'各科人數':'助理人數'}<br>${cfg.sessions.map(s=>esc(s.label.slice(0,1))).join('·')}</th>${ds.map((d,i)=>`<td class="${wdIdx(d)===0?'mon':''}">${a.cov[i].map(c=>c.open?`<div class="covitem ${isAdmin&&c.short.some(x=>x)?'short':''}" title="${esc(c.dp.label+'：'+cfg.sessions.map((s,j)=>s.label+' '+c.n[j]+'/'+c.need[j]).join('，'))}">${group==='pt'?esc(c.dp.label.slice(0,1)):''}${c.n.join('·')}</div>`:'').join('')}</td>`).join('')}</tr>`;
+  const usedIds=new Set();
+  if(!hideSched) emps.forEach(e=>ds.forEach(d=>{const c=codeAt(e.id,d);if(c)usedIds.add(c)}));
+  const legendOpts=cfg.options.filter(o=>(group==='pt'||o.kind!=='work')&&usedIds.has(o.id));
   const legend=(group==='asst'?cfg.sessions.map(s=>`<span><i class="sw c8"></i>${esc(s.label)} ${s.start}–${s.end}（${f1(segHours(s))}h）</span>`).join(''):'')
     +legendOpts.map(o=>`<span><i class="sw c${o.color%9}"></i>${esc(o.label)}${o.kind==='work'?` ${optTimes(o)}（${f1(optHours(o))}h）`:o.kind==='leave'&&o.credit?`（折算 ${f1(o.credit)}h）`:''}</span>`).join('')
     +'<span><i class="sw" style="border:1px dashed var(--muted)"></i>虛線＝畫休、尚未排入</span><span><i class="sw" style="background:var(--accent);border-radius:50%;width:9px;height:9px"></i>畫休已排入</span>'+(isAdmin?'<span><i class="sw" style="border:2px solid var(--bad)"></i>違規</span>':'')+'<span><i class="sw" style="background:var(--bad-soft)"></i>國定假日</span>';
@@ -1153,7 +1158,7 @@ function openReqMenu(btn,eid,d){
   let h=`<div class="mt">${md(d)}（${WD[wdIdx(d)]}）要畫什麼？</div>`;
   if(!opts.length) h+='<div class="mt">管理者還沒有開放可以畫的項目</div>';
   opts.forEach(o=>{
-    const hint=o.kind==='leave'?'特休':o.kind==='work'?optTimes(o):KINDS[o.kind];
+    const hint=o.kind==='leave'?(o.annual?'特休':(PAY[o.pay]||'假別')):o.kind==='work'?optTimes(o):KINDS[o.kind];
     h+=`<button data-rq="${o.id}"><span><i class="sw c${o.color%9}" style="vertical-align:-2px;margin-right:8px"></i>${esc(o.label)}${cur&&cur.id===o.id?' ✓':''}</span><small>${hint}</small></button>`;
   });
   if(cur) h+=`<hr><button data-rqclear="1"><span>取消畫休</span><small></small></button>`;
@@ -1280,7 +1285,7 @@ function loadMembers(){
 }
 function settingsHTML(){
   const colorPick=(o)=>`<div class="colors" role="radiogroup" aria-label="顏色">${[0,1,2,3,4,5,6,7].map(c=>`<label><input type="radio" name="col-${o.id}" data-of="color" data-v="${c}" ${(o.color%9)===c?'checked':''}><span class="c${c}" title="顏色 ${c+1}"></span></label>`).join('')}</div>`;
-  const orows=cfg.options.map(o=>{
+  const orowsArr=cfg.options.map(o=>{
     const w=o.kind==='work',l=o.kind==='leave';
     return `<div class="orow" data-opt="${o.id}">
       <label class="field" style="width:96px">名稱<input type="text" data-of="label" value="${esc(o.label)}" maxlength="4"></label>
@@ -1291,7 +1296,11 @@ function settingsHTML(){
       <label class="field" style="width:130px">計入特休<select data-of="annual"><option value="0" ${o.annual?'':'selected'}>否</option><option value="1" ${o.annual?'selected':''}>是，扣特休天數</option></select></label>${leaveFields(o)}`:''}
       ${(!w||!o.dept)&&o.kind!=='holiday'?`<label class="field" style="width:140px">員工可自己畫<select data-of="selfPick"><option value="1" ${o.selfPick?'selected':''}>是，開放畫休</option><option value="0" ${o.selfPick?'':'selected'}>否</option></select></label>`:''}
       <button class="btn danger" data-delopt="${o.id}" style="align-self:flex-end">刪除</button>${colorPick(o)}</div>`;
-  }).join('');
+  });
+  const isLawLeave=o=>o.kind==='leave'&&!o.annual;
+  const leaveN=cfg.options.filter(isLawLeave).length;
+  const orows=cfg.options.map((o,i)=>isLawLeave(o)?'':orowsArr[i]).join('')
+    +(leaveN?`<details class="notes" style="margin-top:12px"><summary>其他假別（${leaveN} 個）：病假、事假、婚假等，點開調整天數與薪資</summary>${cfg.options.map((o,i)=>isLawLeave(o)?orowsArr[i]:'').join('')}</details>`:'');
   const leaveAdjBlock=e=>{
     const lt=cfg.options.filter(o=>o.kind==='leave'&&!o.annual);
     if(!lt.length) return '';
