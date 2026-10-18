@@ -1,0 +1,14 @@
+{
+  "name": "clinic-shift-scheduler",
+  "version": "0.1.0",
+  "description": "診所排班系統：治療師與助理分頁、員工畫休與換班、勞基法檢查、特休與假別、班表圖片。純前端，可存在瀏覽器或 Supabase。",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "serve": "npx http-server . -p 8080 -c-1",
+    "test": "node tests/logic.test.js && node tests/supabase-adapter.test.js && node tests/rls.test.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.2.17"
+  }
+}
