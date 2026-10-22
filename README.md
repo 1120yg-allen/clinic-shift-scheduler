@@ -98,6 +98,21 @@ npm run serve        # 或用任何靜態網站伺服器，然後開 http://loca
 - ⚠️ **Safari 沒有實際測試過**，也沒有用真的 Supabase 專案端到端測過登入流程。遇到問題請開 issue
 - 下載與複製圖片依賴瀏覽器的功能：Safari 複製圖片可能被擋，可以改用「下載圖片」
 
+## 安裝成 App（PWA）
+
+這個網站可以直接安裝到手機或電腦的主畫面，像 App 一樣全螢幕開啟，不用經過 App Store 或 Google Play。需要用 **https** 網址（部署到 GitHub Pages 就是 https；本機測試用 `localhost` 也可以）。
+
+- **iPhone／iPad（Safari）**：打開網址 → 點下方「分享」→「加入主畫面」。
+- **Android（Chrome）**：打開網址 → 右上角選單 →「安裝應用程式」或「加到主畫面」。
+- **電腦（Chrome）**：網址列右邊的安裝圖示。
+
+安裝後：
+- 本機模式沒有網路也能開啟、使用，資料存在這台裝置。
+- Supabase 模式沒有網路時只能打開畫面，班表與畫休資料要連線才讀得到，也不會被快取，所以看到的永遠是最新的。
+- 更新程式後，把 `sw.js` 裡的 `VERSION` 加 1，使用者下次開啟就會換成新版。
+
+這個專案沒有做成要上架的原生 App，也沒有推播通知（iOS 的網頁推播需要自己的伺服器）。如果診所一定要上架 App Store／Google Play，可以用 [Capacitor](https://capacitorjs.com) 把這個網站包成原生 App：需要 Apple 開發者帳號（每年約 99 美元）和 Google Play 開發者帳號（一次性約 25 美元），並且要自己準備審核資料與隱私權政策。
+
 ## 安全與隱私
 
 - 員工個人資料（手機、緊急聯絡人、地址）和管理者備註存在只有管理者讀得到的路徑，規則寫在 `supabase/schema.sql`，用 `tests/rls.test.mjs` 測過
@@ -129,6 +144,7 @@ config.js             設定（模式、Supabase 金鑰、補充假日表）
 styles.css            樣式（含深色模式）
 src/app.js            畫面與排班邏輯
 src/platform.js       選擇資料來源、瀏覽器下載
+sw.js / manifest.webmanifest / icons/   安裝成 App（PWA）
 src/adapters/local.js       本機模式
 src/adapters/supabase.js    Supabase 模式（email 驗證碼登入、資料層）
 supabase/schema.sql   資料表與權限
